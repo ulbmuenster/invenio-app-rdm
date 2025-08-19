@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2023-2024 CERN.
+# Copyright (C) 2023-2025 CERN.
 # Copyright (C) 2024-2025 Graz University of Technology.
+# Copyright (C) 2025 Northwestern University.
 #
 # Invenio-App-RDM is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
-"""Record migration script from InvenioRDM 11.0 to 12.0.
+"""Record migration script from InvenioRDM 12.0 to 13.0.
 
 Disclaimer: This script is intended to be executed *only once*, namely when
-upgrading from InvenioRDM 11.0 to 12.0!
+upgrading from InvenioRDM 12.0 to 13.0!
 If this script is executed at any other time, probably the best case scenario
 is that nothing happens!
 
@@ -20,11 +21,17 @@ This script has been tested with following data:
     - internal_notes
 """
 
+import sys
+import traceback
+
 from click import secho
 from invenio_access.permissions import system_identity
 from invenio_db import db
 from invenio_rdm_records.proxies import current_rdm_records_service as records_service
 from invenio_search.engine import dsl
+from invenio_vocabularies.contrib.affiliations.api import Affiliation
+from invenio_vocabularies.contrib.names.api import Name
+from sqlalchemy import select
 
 
 def run_upgrade(has, migrate):
@@ -113,12 +120,75 @@ def run_upgrade_for_thesis():
     secho("Thesis upgrade has finished.", fg="green")
 
 
+def run_upgrade_for_affiliations():
+    """Update affiliations entry so that they conform to new shape."""
+    secho("Affiliations upgrade has started.", fg="green")
+
+    error = False
+    # Batch intake to limit memory usage
+    stmt = select(Affiliation.model_cls).execution_options(yield_per=250)
+
+    for affiliation_model in db.session.scalars(stmt):
+        try:
+            data_for_affiliation = affiliation_model.data
+            data_for_affiliation.pop("id", None)
+            data_for_affiliation.pop("pid", None)
+            affiliation = Affiliation(data_for_affiliation, model=affiliation_model)
+            affiliation.commit()
+        except Exception as e:
+            secho(f"Migration failed with '{repr(e)}'.", fg="red")
+            secho(f"Affiliation {affiliation_model.pid} failed to update", fg="red")
+            trace = traceback.format_exc()
+            secho(f"Traceback {trace}", fg="red")
+            error = True
+            break
+
+    if error:
+        db.session.rollback()
+        secho("Affiliations upgrade failed.", fg="red")
+        sys.exit(1)
+    else:
+        db.session.commit()
+        secho("Affiliations upgrade succeeded.", fg="green")
+
+
+def run_upgrade_for_names():
+    """Update names entry so that they conform to new shape."""
+    secho("Names upgrade has started.", fg="green")
+
+    error = False
+    # Batch intake to limit memory usage
+    stmt = select(Name.model_cls).execution_options(yield_per=250)
+
+    for name_model in db.session.scalars(stmt):
+        try:
+            data_for_name = name_model.data
+            data_for_name.pop("id", None)
+            data_for_name.pop("pid", None)
+            name = Name(data_for_name, model=name_model)
+            name.commit()
+        except Exception as e:
+            secho(f"Migration failed with '{repr(e)}'.", fg="red")
+            secho(f"Name {name_model.pid} failed to update", fg="red")
+            trace = traceback.format_exc()
+            secho(f"Traceback {trace}", fg="red")
+            error = True
+            break
+
+    if error:
+        db.session.rollback()
+        secho("Names upgrade failed.", fg="red")
+        sys.exit(1)
+    else:
+        db.session.commit()
+        secho("Names upgrade succeeded.", fg="green")
+
+
 def execute_upgrade():
     """Execute the upgrade from InvenioRDM 12.0 to 13.0.0.
 
     Please read the disclaimer on this module before thinking about executing
     this function!
-    THIS MODULE IS WORK IN PROGRESS, UNTIL official v13 release
 
     NOTE:
     since the data upgrade steps are more selective now, the approach how to do
@@ -131,6 +201,8 @@ def execute_upgrade():
     secho("Starting data migration...", fg="green")
 
     run_upgrade_for_thesis()
+    run_upgrade_for_affiliations()
+    run_upgrade_for_names()
 
 
 # if the script is executed on its own, perform the upgrade

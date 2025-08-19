@@ -216,19 +216,13 @@ def record_detail(
     if record is not None and emitter is not None:
         emitter(current_app, record=record._record, via_api=False)
 
-    record_owner = (
-        record_ui.get("expanded", {})
-        .get("parent", {})
-        .get("access", {})
-        .get("owned_by", {})
-    )
     resolved_community, _ = get_record_community(record_ui)
-    resolved_community = (
+    resolved_community_ui = (
         UICommunityJSONSerializer().dump_obj(resolved_community.to_dict())
         if resolved_community
         else None
     )
-    theme = resolved_community.get("theme", {}) if resolved_community else None
+    theme = resolved_community_ui.get("theme", {}) if resolved_community else None
 
     return render_community_theme_template(
         current_app.config.get("APP_RDM_RECORD_LANDING_PAGE_TEMPLATE"),
@@ -256,11 +250,9 @@ def record_detail(
         include_deleted=include_deleted,
         is_draft=is_draft,
         community=resolved_community,
+        community_ui=resolved_community_ui,
         external_resources=get_external_resources(record),
         user_avatar=avatar,
-        record_owner_id=(
-            record_owner.get("id")
-        ),  # record created with system_identity have not owners e.g demo
     )
 
 

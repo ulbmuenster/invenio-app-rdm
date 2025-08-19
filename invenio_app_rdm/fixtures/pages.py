@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2022-2024 CERN.
+# Copyright (C) 2022-2025 CERN.
 # Copyright (C) 2025 University of Münster.
 #
 # Invenio App RDM is free software; you can redistribute it and/or modify
@@ -68,6 +68,9 @@ class StaticPages(FixtureMixin):
                     ),
                     "lang": lang[0],
                     "description": entry.get("description", ""),
-                    "template_name": current_app.config["PAGES_DEFAULT_TEMPLATE"],
+                    "template_name": entry.get(
+                        "template_name",
+                        current_app.config["PAGES_DEFAULT_TEMPLATE"],
+                    ),
                 }
                 current_pages_service.create(system_identity, data)
