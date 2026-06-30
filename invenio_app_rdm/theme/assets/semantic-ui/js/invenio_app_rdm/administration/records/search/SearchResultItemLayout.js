@@ -12,6 +12,7 @@ import { BoolFormatter } from "@js/invenio_administration";
 import { UserActions } from "../../users/UserActions";
 import { RecordActions } from "../RecordActions";
 import _truncate from "lodash/truncate";
+import { DateTime } from "luxon";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { Popup, Table, Button } from "semantic-ui-react";
@@ -19,6 +20,11 @@ import { withState } from "react-searchkit";
 import { AdminUIRoutes } from "@js/invenio_administration/src/routes";
 import { humanReadableBytes, toRelativeTime } from "react-invenio-forms";
 import { i18next } from "@translations/invenio_app_rdm/i18next";
+
+const formatAdminDate = (timestamp) =>
+  window.APP_RDM_ADMIN_CONFIG?.absoluteDates
+    ? DateTime.fromISO(timestamp).toLocaleString(DateTime.DATETIME_MED)
+    : toRelativeTime(timestamp);
 
 class SearchResultItemComponent extends Component {
   refreshAfterAction = () => {
@@ -94,7 +100,7 @@ class SearchResultItemComponent extends Component {
           data-label={i18next.t("Created")}
           className="word-break-all"
         >
-          {toRelativeTime(result.created)}
+          {formatAdminDate(result.created)}
         </Table.Cell>
         <Table.Cell
           collapsing
