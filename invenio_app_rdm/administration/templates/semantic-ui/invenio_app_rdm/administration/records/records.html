@@ -9,4 +9,7 @@
 {% block javascript %}
   {{ super() }}
   {{ webpack['invenio-records-administration.js'] }}
+  <script>
+    window.APP_RDM_ADMIN_CONFIG = {{ {"absoluteDates": config.get("APP_RDM_ADMIN_ABSOLUTE_DATES", False)} | tojson | safe }};
+  </script>
 {% endblock %}

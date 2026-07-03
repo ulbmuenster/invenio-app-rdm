@@ -1038,6 +1038,17 @@ APP_RDM_FILES_INTEGRITY_REPORT_SUBJECT = _("Files integrity report")
 APP_RDM_ADMIN_EMAIL_RECIPIENT = "info@inveniosoftware.org"
 """Admin e-mail"""
 
+APP_RDM_ADMIN_ABSOLUTE_DATES = False
+"""Display absolute dates instead of relative dates in the administration UI.
+
+When set to ``True``, timestamps such as the "Created" date in the records list
+are rendered as locale-formatted datetime strings (e.g. "Jun 30, 2026, 2:30 PM")
+instead of relative values (e.g. "12 days ago").
+
+Can be toggled via the environment variable
+``INVENIO_APP_RDM_ADMIN_ABSOLUTE_DATES=true``.
+"""
+
 APP_RDM_IDENTIFIER_SCHEMES_UI = {
     "orcid": {
         "url_prefix": "http://orcid.org/",
